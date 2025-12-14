@@ -120,9 +120,10 @@ LOG_LEVEL=INFO
 
 ### Основной режим (Multi-Camera)
 
+нельзя находится в папке при запуске команды, команда запускается из родителя
+
 ```bash
-cd recognition_service
-source .venv/bin/activate
+source recognition_service/.venv/bin/activate
 python3 -m recognition_service.main
 ```
 

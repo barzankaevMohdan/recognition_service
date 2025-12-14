@@ -9,6 +9,7 @@ import os
 import sys
 import argparse
 from pathlib import Path
+import requests
 from .multi_camera_manager import MultiCameraManager
 from .logging_config import setup_logging, get_logger
 
@@ -100,6 +101,24 @@ def main() -> None:
     logger.info(f'Backend: {args.backend_url}')
     logger.info(f'Refresh interval: {args.refresh_interval}s')
     logger.info('=' * 60)
+
+    # Reset presence for this company on startup to avoid "stuck" IN statuses
+    reset_token = os.getenv('PRESENCE_RESET_TOKEN')
+    if not reset_token:
+        logger.warning('PRESENCE_RESET_TOKEN is not set, presence reset skipped')
+    else:
+        try:
+            reset_url = f"{args.backend_url.rstrip('/')}/api/presence/public/reset/{args.company_slug}"
+            resp = requests.post(
+                reset_url,
+                json={"olderThanMinutes": 0},
+                timeout=10,
+                headers={"x-reset-token": reset_token},
+            )
+            resp.raise_for_status()
+            logger.info(f"Presence reset for company {args.company_slug}: {resp.json()}")
+        except Exception as e:
+            logger.warning(f"Presence reset failed (non-fatal): {e}")
     
     try:
         manager = MultiCameraManager(
